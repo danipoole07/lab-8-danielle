@@ -8,3 +8,98 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+```{r}
+#Load tidyverse package
+library("tidyverse")
+```
+
+```{r}
+#Read in dataset
+salmon<- read_csv("salmon_imports_copy.csv")
+```
+
+```{r}
+#Make an exploritory scatter plot to access relationship between year and salmon imports
+
+salmon_scatter<-ggplot(salmon, aes(x= year, y=salmon_fresh))+
+  geom_point()
+
+salmon_scatter
+
+#Overall, it looks like describing the relationship between year and fresh salmon imports using linear regression makes sense. The line is linear for the most part, and does not display any other obvious patterns that would indicate an exponential relationship or another type of relationship. The only concerns that arise are two deviations from the linear pattern. These occur between the years 2000-2005 and again in the years between 2010 and 2015. Two major dips in the data points. 
+```
+
+```{r}
+#Linear Regeression
+
+salmon_model<-lm(salmon_fresh ~ year, data = salmon)
+
+salmon_model
+
+# Call the model name to see the intercept and slope for the model. 
+#With each additional year, we expect to see an fresh fish imports increase by 7550 tons. 
+#At year 0, the model predicts a negitive fresh fish value of -14982940. This is not possible in a real-life scenario. 
+
+```
+
+```{r}
+plot(salmon_model)
+par(mfrow = c(2,2))
+plot(salmon_model)
+# In general, the residuals appear normally distributed. Independence of errors: resideuals relatively constant throughout the course(x-axis). 
+#However, there are so concerning outliers. In the residuals vs leverage graph, there are three labeled outiers: 24, 25, and 28. Point 25 is outside the dashed line (Cooks Distance) and therefore may influance the model. 
+```
+
+```{r}
+summary(salmon_model)
+
+#Coefficient of Determination is 0.9478 with 1 being perfectly predicatable. Therefore, in this model, 94.8% of variance in salmon imports is explained by year. 
+
+# R2 value meaning: the proportion of the variance in the dependent (outcome, y) variable that is explained by the value of the independent (input, x) variable. 
+
+#If 94.8% of variance in salmon imports is explained by year, then 5.2% of variance in salmon imports is explained by other factors. 
+```
+
+```{r}
+#Creating a graph to show the correlation between year and salmon imports
+
+salmon_final_graph <-ggplot(salmon, aes(x= year, y=salmon_fresh))+
+  geom_point()+
+  geom_smooth(method=lm, se =TRUE, size=.5, color="gray20")+
+  theme_bw()+
+  scale_x_continuous(expand=c(0,0), limits=c(1990,2017))+
+  labs(x="Year", y="U.S. Annual Fresh Salmon Imports\n(1,000 pounds)")
+  
+
+
+salmon_final_graph
+  
+```
+
+```{r}
+new_years <- data.frame(year = c(2022, 2024, 2026, 2028))
+```
+
+```{r}
+future_predict <- predict(salmon_model, newdata = new_years, interval = "confidence")
+future_predict
+```
+
+```{r}
+predictions <- data.frame(new_years, future_predict)
+
+predictions
+```
+
+```{r}
+salmon_test<- cor.test(salmon$year, salmon$salmon_fresh)
+salmon_test
+
+# correlation of 0.9735387 between the year variable and the imported salmon variable. This is a strong positive correlation. 
+
+## Relationship between year and salmon imports. Year significantly predicts salmon import volume (b = 7550, t(26) = 21.73, p < 0.001) with a strong positive correlation between the two (Pearson’s r = 0.97). The overall model explains a significant amount of variance in salmon import volume (F(1,26) = 471.9, p < 0.001, R2 = 0.95). Gray region is the 95% confidence interval for the mean predicted value.
+
+
+```
+
